@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+# In this script an intermediate certificate is created from a root certificate
+
 if [[ $1 = "cleanup" ]]; then
   rm -rf 1_root
   rm -rf 2_intermediate
@@ -128,7 +130,8 @@ echo "100212" > 2_intermediate/serial
 # -passin arg The key password source.
 # -days arg The number of days to certify the certificate for.
 # -notext Don't output the text form of a certificate to the output file.
-# -md alg The message digest to use. Any digest supported by the OpenSSL dgst command can be used. This option also applies to CRLs.
+# -md alg The message digest to use. Any digest supported by the OpenSSL dgst command can be used. This option also applies to 
+s.
 # -in filename An input filename containing a single certificate request to be signed by the CA.
 openssl ca -config openssl.cnf -extensions v3_intermediate_ca \
         -passin pass:$2 \
@@ -175,7 +178,7 @@ echo
 echo Create the application signing request
 echo ---
 mkdir -p 3_application/csr
-# Server
+# Server certificate request is created from intermediate cert -> intermediate_openssl.cnf
 # req - PKCS#10 certificate request and certificate generating utility
 # -config openssl.cnf vedi configurazione allegata
 # -new
@@ -249,6 +252,7 @@ echo
 echo Generate the client signing request
 echo ---
 mkdir -p 4_client/csr
+# Client certification is created from intermediate cert -> intermediate_openssl.cnf
 # req - PKCS#10 certificate request for client
 openssl req -config intermediate_openssl.cnf \
       -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=$1" \
