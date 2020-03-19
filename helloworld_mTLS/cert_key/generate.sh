@@ -24,7 +24,10 @@ echo
 echo Generate the root key
 echo ---
 mkdir -p 1_root/private
-openssl genrsa -aes256 -passout pass:$2 -out 1_root/private/ca.key.pem 4096
+#  Key creazione della private key.
+#genrsa Generation of RSA Private 
+# 4096 mi sembra esagerato
+openssl genrsa -aes256 -passout pass:$2 -out 1_root/private/ca.key.pem 4096 
 
 chmod 444 1_root/private/ca.key.pem
 
@@ -36,6 +39,31 @@ mkdir -p 1_root/certs
 mkdir -p 1_root/newcerts
 touch 1_root/index.txt
 echo "100212" > 1_root/serial
+# Certificate request generation
+# req - PKCS#10 certificate request and certificate generating utility
+# -config openssl.cnf vedi configurazione allegata
+# -new
+# This option generates a new certificate request. It will prompt the user for the relevant field values.
+# The actual fields prompted for and their maximum and minimum sizes are specified in the configuration file
+# and any requested extensions.
+# key If the -key option is not used it will generate a new RSA private key using information specified in the
+# configuration file.
+# -extensions see openssl.cnf
+# -subj arg Sets subject name for new request or supersedes the subject name when processing a request.  The arg must
+# be formatted as /type0=value0/type1=value1/type2=..., characters may be escaped by \ (backslash), no
+# spaces are skipped.
+# -subj:
+# Country Name (2 letter code) [AU]:GB
+# State or Province Name (full name) [Some-State]:.
+# Locality Name (eg, city) []:London
+# Organization Name (eg, company) [Internet Widgits Pty Ltd]:Feisty Duck Ltd
+# Organizational Unit Name (eg, section) []:
+# Common Name (e.g. server FQDN or YOUR name) []:www.feistyduck.com
+# Email Address []:webmaster@feistyduck.com
+# Please enter the following 'extra' attributes
+# to be sent with your certificate request
+# A challenge password []:
+# An optional company name []:
 openssl req -config openssl.cnf \
       -key 1_root/private/ca.key.pem \
       -passin pass:$2 \
@@ -47,12 +75,18 @@ openssl req -config openssl.cnf \
 echo 
 echo Verify root key
 echo ---
+# x509 - Certificate display and signing utility
+# -noout This option prevents output of the encoded version of the request
+# -text
+# Prints out the certificate in text form. Full details are output including the public key, signature
+# algorithms, issuer and subject names, serial number any extensions present and any trust settings.
 openssl x509 -noout -text -in 1_root/certs/ca.cert.pem
 
 echo 
 echo Generate the key for the intermediary certificate
 echo ---
 mkdir -p 2_intermediate/private
+# Generazione del chiave dell'intermediario
 openssl genrsa -aes256 \
   -passout pass:$2 \
   -out 2_intermediate/private/intermediate.key.pem 4096
@@ -64,6 +98,15 @@ echo
 echo Generate the signing request for the intermediary certificate
 echo ---
 mkdir -p 2_intermediate/csr
+# Creazione della richiesta del certificato
+# req - PKCS#10 certificate request and certificate generating utility
+# -config openssl.cnf vedi configurazione allegata
+# -new
+#This option generates a new certificate request. It will prompt the user for the relevant field values.
+#The actual fields prompted for and their maximum and minimum sizes are specified in the configuration file
+#and any requested extensions.
+#If the -key option is not used it will generate a new RSA private key using information specified in the
+#configuration file.
 openssl req -config openssl.cnf -new -sha256 \
       -passin pass:$2 \
       -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=$1" \
@@ -78,6 +121,15 @@ mkdir -p 2_intermediate/certs
 mkdir -p 2_intermediate/newcerts
 touch 2_intermediate/index.txt
 echo "100212" > 2_intermediate/serial
+
+# Firma dell'intermediario
+# The ca command is a minimal CA application. It can be used to sign certificate requests in a variety of forms
+# and generate CRLs(Certificate Revocation List) it also maintains a text database of issued certificates and their status.
+# -passin arg The key password source.
+# -days arg The number of days to certify the certificate for.
+# -notext Don't output the text form of a certificate to the output file.
+# -md alg The message digest to use. Any digest supported by the OpenSSL dgst command can be used. This option also applies to CRLs.
+# -in filename An input filename containing a single certificate request to be signed by the CA.
 openssl ca -config openssl.cnf -extensions v3_intermediate_ca \
         -passin pass:$2 \
         -days 3650 -notext -md sha256 \
@@ -100,6 +152,7 @@ openssl verify -CAfile 1_root/certs/ca.cert.pem \
 echo 
 echo Create the chain file
 echo ---
+# Chain file creation
 cat 2_intermediate/certs/intermediate.cert.pem \
       1_root/certs/ca.cert.pem > 2_intermediate/certs/ca-chain.cert.pem
 
@@ -110,6 +163,7 @@ echo
 echo Create the application key
 echo ---
 mkdir -p 3_application/private
+# Client key
 openssl genrsa \
       -passout pass:$2 \
     -out 3_application/private/$1.key.pem 2048
@@ -121,6 +175,29 @@ echo
 echo Create the application signing request
 echo ---
 mkdir -p 3_application/csr
+# req - PKCS#10 certificate request and certificate generating utility
+# -config openssl.cnf vedi configurazione allegata
+# -new
+# This option generates a new certificate request. It will prompt the user for the relevant field values.
+# The actual fields prompted for and their maximum and minimum sizes are specified in the configuration file
+# and any requested extensions.
+# If the -key option is not used it will generate a new RSA private key using information specified in the
+# configuration file.
+# -subj arg Sets subject name for new request or supersedes the subject name when processing a request.  The arg must
+# be formatted as /type0=value0/type1=value1/type2=..., characters may be escaped by \ (backslash), no
+# spaces are skipped.
+# -subj:
+# Country Name (2 letter code) [AU]:GB
+# State or Province Name (full name) [Some-State]:.
+# Locality Name (eg, city) []:London
+# Organization Name (eg, company) [Internet Widgits Pty Ltd]:Feisty Duck Ltd
+# Organizational Unit Name (eg, section) []:
+# Common Name (e.g. server FQDN or YOUR name) []:www.feistyduck.com
+# Email Address []:webmaster@feistyduck.com
+# Please enter the following 'extra' attributes
+# to be sent with your certificate request
+# A challenge password []:
+# An optional company name []:
 openssl req -config intermediate_openssl.cnf \
       -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=$1" \
       -passin pass:$2 \
@@ -170,6 +247,7 @@ echo
 echo Generate the client signing request
 echo ---
 mkdir -p 4_client/csr
+# # Creazione della richiesta del certificato
 openssl req -config intermediate_openssl.cnf \
       -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=$1" \
       -passin pass:$2 \
