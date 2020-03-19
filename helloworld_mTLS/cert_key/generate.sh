@@ -163,7 +163,7 @@ echo
 echo Create the application key
 echo ---
 mkdir -p 3_application/private
-# Client key
+# Server key
 openssl genrsa \
       -passout pass:$2 \
     -out 3_application/private/$1.key.pem 2048
@@ -175,6 +175,7 @@ echo
 echo Create the application signing request
 echo ---
 mkdir -p 3_application/csr
+# Server
 # req - PKCS#10 certificate request and certificate generating utility
 # -config openssl.cnf vedi configurazione allegata
 # -new
@@ -236,6 +237,7 @@ echo
 echo Generate the client key
 echo ---
 mkdir -p 4_client/private
+# Create Client key
 openssl genrsa \
     -passout pass:$2 \
     -out 4_client/private/$1.key.pem 2048
@@ -247,7 +249,7 @@ echo
 echo Generate the client signing request
 echo ---
 mkdir -p 4_client/csr
-# # Creazione della richiesta del certificato
+# req - PKCS#10 certificate request for client
 openssl req -config intermediate_openssl.cnf \
       -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=$1" \
       -passin pass:$2 \
