@@ -265,6 +265,15 @@ echo
 echo Create the client certificate
 echo ---
 mkdir -p 4_client/certs
+# Firma dell'intermediario
+# The ca command is a minimal CA application. It can be used to sign certificate requests in a variety of forms
+# and generate CRLs(Certificate Revocation List) it also maintains a text database of issued certificates and their status.
+# -passin arg The key password source.
+# -days arg The number of days to certify the certificate for.
+# -notext Don't output the text form of a certificate to the output file.
+# -md alg The message digest to use. Any digest supported by the OpenSSL dgst command can be used. This option also applies to 
+s.
+# -in filename An input filename containing a single certificate request to be signed by the CA.
 openssl ca -config intermediate_openssl.cnf \
       -passin pass:$2 \
       -extensions usr_cert -days 375 -notext -md sha256 \
