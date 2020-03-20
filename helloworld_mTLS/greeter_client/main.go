@@ -41,25 +41,58 @@ const (
 func main() {
 
 	//---------- TLS Setting -----------//
+	//LoadX509KeyPair reads and parses a public/private key pair from a pair of files. 
+	//The files must contain PEM encoded data. 
+	//The certificate file may contain intermediate certificates following the leaf certificate to form a certificate chain.
+	//On successful return, Certificate.Leaf will be nil because the parsed form of the certificate is not retained.
 	certificate, err := tls.LoadX509KeyPair(
+		//certificate signed by intermediary for the client. It contains the public key.
 		"../cert_key/4_client/certs/localhost.cert.pem",
+		//client key (needed to sign the requests, and only the public key can open the data)
+		//If you encrypt data using someone’s public key, only their corresponding private key can decrypt it. 
+		//On the other hand, if data is encrypted with the private key anyone can use the public key 
+		//to unlock the message.
 		"../cert_key/4_client/private/localhost.key.pem",
 	)
 
 	certPool := x509.NewCertPool()
+	// chain is composed by ca.cert.pem and intermediate.cert.pem
 	bs, err := ioutil.ReadFile("../cert_key/2_intermediate/certs/ca-chain.cert.pem")
 	if err != nil {
 		log.Fatalf("failed to read ca cert: %s", err)
 	}
-
+	//
+        //AppendCertsFromPEM attempts to parse a series of PEM encoded certificates. 
+	//It appends any certificates found to s and reports whether any certificates were successfully parsed.
+        //On many Linux systems, /etc/ssl/cert.pem will contain the system wide set of root CAs 
+	//in a format suitable for this function.
 	ok := certPool.AppendCertsFromPEM(bs)
 	if !ok {
 		log.Fatal("failed to append certs")
 	}
 
 	transportCreds := credentials.NewTLS(&tls.Config{
+		// ServerName is used to verify the hostname on the returned
+		// certificates unless InsecureSkipVerify is given. It is also included
+		// in the client's handshake to support virtual hosting unless it is
+		// an IP address.
 		ServerName:   "localhost",
+		// Safe store, trusted certificate list
+		// Certificates contains one or more certificate chains to present to the
+	        // other side of the connection. The first certificate compatible with the
+		// peer's requirements is selected automatically.
+    		// Server configurations must set one of Certificates, GetCertificate or
+  		// GetConfigForClient. Clients doing client-authentication may set either
+                // Certificates or GetClientCertificate.
+                //
+                // Note: if there are multiple Certificates, and they don't have the
+                // optional field Leaf set, certificate selection will incur a significant
+                // per-handshake performance cost.
 		Certificates: []tls.Certificate{certificate},
+		// Safe store, trusted certificate list
+		// RootCAs defines the set of root certificate authorities
+   		// that clients use when verifying server certificates.
+   		// If RootCAs is nil, TLS uses the host's root CA set.
 		RootCAs:      certPool,
 	})
 
