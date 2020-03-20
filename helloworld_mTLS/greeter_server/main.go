@@ -50,12 +50,14 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 
 func main() {
 	//----------TLS Setting-----------//
+	// credentials needed to communicate with client
 	certificate, err := tls.LoadX509KeyPair(
 	"../cert_key/3_application/certs/localhost.cert.pem",
 	"../cert_key/3_application/private/localhost.key.pem",
 	)
 
 	certPool := x509.NewCertPool()
+	// Trusted store, contain the list of trusted certificates. client has to use one of this certificate to be trusted
 	bs, err := ioutil.ReadFile("../cert_key/2_intermediate/certs/ca-chain.cert.pem")
 	if err != nil {
 		log.Fatalf("failed to read client ca cert: %s", err)
