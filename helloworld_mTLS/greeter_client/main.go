@@ -90,6 +90,7 @@ func main() {
                 // per-handshake performance cost.
 		Certificates: []tls.Certificate{certificate},
 		// Safe store, trusted certificate list
+		// Server need to use one certificate presents in this lists.
 		// RootCAs defines the set of root certificate authorities
    		// that clients use when verifying server certificates.
    		// If RootCAs is nil, TLS uses the host's root CA set.
