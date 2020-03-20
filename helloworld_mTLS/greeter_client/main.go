@@ -77,7 +77,7 @@ func main() {
 		// in the client's handshake to support virtual hosting unless it is
 		// an IP address.
 		ServerName:   "localhost",
-		// Safe store, trusted certificate list
+		// Credentials to present to the server
 		// Certificates contains one or more certificate chains to present to the
 	        // other side of the connection. The first certificate compatible with the
 		// peer's requirements is selected automatically.
